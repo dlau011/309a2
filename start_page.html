@@ -1,0 +1,35 @@
+<html>
+<head>
+	<title>Tap Tap Bug</title>
+	<link rel="stylesheet" href="styles.css">
+	<script src="javascript.js"></script>
+</head>
+
+<body>
+	<!-- HOMEPAGE -->
+	<div id="homepage">
+		<button type="button" onclick="toggle_page()">Start</button>
+		<div class="highscore">
+			<p>Level</p>
+			<form>
+			  <input type="radio" name="level" value="1" onclick="check(this.value)"> Level 1<br>
+			  <input type="radio" name="level" value="2" onclick="check(this.value)"> Level 2<br>
+			</form> 
+		<p>High Score</p>
+		<p id="score_display"></p>
+		</div>
+
+	</div>
+
+	<!-- GAMEPAGE -->
+	<div id="gamepage">
+		<p id="timer">Time: </p>
+		<img src="pause_button.png" id="pause_button">
+		<p id="score">Score: </p>
+		<div class="box" id="game_container"></div>
+
+	</div>
+
+</body>
+
+</html>
