@@ -14,34 +14,39 @@ var food = [];
 function start_game() {
 	game_area.start();
 	// call function that calls while loop and puts bugs on the screen until can't
-	bug = new bug("orange", 30);
+	bug = new bug("orange");
+	
 }
 
 function update_game() {
 	game_area.clear();
 
 }
-
-function bug(color, speed){
+/*function food() {
+	context = game_area.context;
+	img = new Image();
+	img.onload = function() {
+		canvas.width=40;
+		canvas.height=30;
+		context.drawImage(img, 0,0);
+	}
+	img.src = "http://www.onestopwebmasters.com/wp-content/uploads/2011/06/eitai-bridge.jpg";
+}*/
+function bug(color){
     this.color = color;
-    this.speed = speed;
     context = game_area.context;
     var radius = 5;
-    var marginX = 25
-    var marginY = 25
 	// Draw head
 	context.beginPath();
-	context.arc(marginX, marginY, radius, Math.PI-1, 2*Math.PI + 1);
+	context.arc(15, 5, radius, Math.PI-1, 2*Math.PI + 1);
 	context.strokeStyle = color;
 	context.stroke();
 	context.fillStyle = color;
 	context.fill();
 
-	// Translate canvas down a little
-	context.translate(0,radius+3);
 	// Draw middle
 	context.beginPath();
-	context.arc(marginX, marginY, radius, Math.PI-1, 2*Math.PI + 1);
+	context.arc(15, 11, radius - 2, Math.PI-1, 2*Math.PI + 1);
 	context.stroke();
 	context.fillStyle = color;
 	context.fill();
@@ -52,7 +57,7 @@ function bug(color, speed){
     context.scale(1, 1.75);
     // draw circle which will be stretched into an oval
     context.beginPath();
-    context.arc(marginX, marginY-5, radius, 0, 2 * Math.PI, false);
+    context.arc(15, 13, radius, 0, 2 * Math.PI, false);
     // restore to original state
     context.restore();
     // Apply styling to oval
@@ -63,28 +68,28 @@ function bug(color, speed){
     context.stroke();
     // Draw legs; go from point on body outwards
     //1 left
-    context.moveTo(20, 22);
-    context.lineTo(13, 18);
+    context.moveTo(12, 12);
+    context.lineTo(3, 8);
     context.stroke();
     //2 left
-    context.moveTo(20, 28);
-    context.lineTo(13, 28);
+    context.moveTo(10, 18);
+    context.lineTo(3, 18);
     context.stroke();
     //3 left
-    context.moveTo(20, 35);
-    context.lineTo(13, 38);
+    context.moveTo(10, 25);
+    context.lineTo(3, 28);
     context.stroke();
     //1 right
-    context.moveTo(30, 22);
-    context.lineTo(37, 18);
+    context.moveTo(18, 12);
+    context.lineTo(27, 8);
     context.stroke();
     //2 right
-    context.moveTo(30, 28);
-    context.lineTo(37, 28);
+    context.moveTo(20, 18);
+    context.lineTo(27, 18);
     context.stroke();
     //3 right
-    context.moveTo(30, 35);
-    context.lineTo(37, 38);
+    context.moveTo(20, 25);
+    context.lineTo(27, 28);
     context.stroke();
 }
 
@@ -94,6 +99,15 @@ function check(value) {
 	}
 	else {
 		document.getElementById("score_display").innerHTML = "100";
+	}
+}
+function toggle_pause(source) {
+	if (source.src != "play_button.png") {
+		source.src = "play_button.png";
+	}
+
+	else {
+		source.src = "pause_button.png";
 	}
 }
 
