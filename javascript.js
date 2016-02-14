@@ -2,7 +2,7 @@ var game_area = {
 	canvas : document.createElement("canvas"),
 	start : function() {
 		this.canvas.width = 400;
-		this.canvas.height = 600;
+		this.canvas.height = 700;
 		this.context = this.canvas.getContext("2d");
 		document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 		this.interval = setInterval(update_game_area, 20);
@@ -19,25 +19,18 @@ var paused = false;
 var time = 60;
 var score = 0;
 var delay = 0;
+var countdown;
+var bug_interval;
 
 function start_game() {
 	game_area.start();
 	game_area.canvas.addEventListener('click', bug_click, false);
 
-	//setInterval()
-	//while (1) {
-		bug1 = new bug("orange", 30, 30);
-		bug2 = new bug("black", 50, 50);
-		bug3 = new bug("red", 100, 50);
-		bugs.push(bug1);
-	//}
 	for (i = 0; i < 5; i++) {
 		make_food();
 	}
-	var interval = setInterval(time_countdown, 1000);
-	//draw_pause_button();
-	//console.log(food);
-	//console.log(bugs);
+	countdown = setInterval(time_countdown, 1000);
+	bug_interval = setInterval(spawn_bug, 1000 + 2000*Math.random());
 }
 
 function update_game_area() {
@@ -47,8 +40,12 @@ function update_game_area() {
 	if (bugs.length > 0) {
 		for (i = 0; i < bugs.length; i++) {
 			var time = 60;
-			bugs[i].y += 1;
-			bugs[i].x += 2;
+			// If not paused, call function to change bug's x and y
+			if (!paused) {
+				// function to update bug location
+				bugs[i].y += 1;
+				bugs[i].x += 2;
+			}
 			bugs[i].update();
 		}	
 	}
@@ -57,7 +54,6 @@ function update_game_area() {
 			update_food(food[i][0], food[i][1]);
 		}
 	}
-
 }
 
 function update_food(x, y) {
@@ -65,6 +61,19 @@ function update_food(x, y) {
 	context.drawImage(img, x, y, 35, 35);
 }
 
+function rand_color() {
+	var num = Math.random();
+	if (num <= .33) {
+		return "orange";
+	}
+	if (num > .33 && num <= .66) {
+		return "red";
+	}
+	if (num > .66) {
+		return "black";
+	}
+
+}
 function make_food() {
 	var img = document.getElementById("watermelon");
 	context = game_area.context;
@@ -78,7 +87,6 @@ function make_food() {
 			if (distance(food[i][0], food[i][1], x, y) < 50) {
 				free = false;
 			}
-
 		}
 		if (free) {
 			context.drawImage(img, x, y, 35, 35);
@@ -129,6 +137,9 @@ function draw_countdown() {
 
 function time_countdown() {
 	time -=1;
+	if (time <=0) {
+		clearInterval(countdown);
+	}
 }
 
 function find_closest_food(bug) {
@@ -144,16 +155,8 @@ function find_closest_food(bug) {
 	return i_food;
 }
 
-function spawn_bug() {
-	delay -= 1;
-	if (delay <= 0) {
-		x = 400 * Math.random();
-		y = 10;
-		delay = 1 + 2*Math.random();
-		//setTimeout(function() {})
-	}
-}
-function bug(color, x, y, dest) {
+
+function bug(color, x, y) {
     this.color = color;    
     // use these to keep track of bug coordinate
     this.x = x;
@@ -218,12 +221,20 @@ function bug(color, x, y, dest) {
     context.moveTo(x+5, y+10);
     context.lineTo(x+12, y+15);
     context.stroke();
-
     this.update = function() {
     	bug(color, this.x, this.y);
     }
 }
 
+function spawn_bug() {
+	x = 400 * Math.random();
+	y = 100;
+	new_bug = new bug(rand_color(), x, y);
+	bugs.push(new_bug);
+	bug_interval = setInterval(spawn_bug, 1000 + 2000*Math.random());
+	console.log(bugs);
+
+}
 function bug_click(event) {
 	x = event.offsetX;
 	y = event.offsetY;
