@@ -1,4 +1,3 @@
-
 var game_area = {
 	canvas : document.createElement("canvas"),
 	start : function() {
@@ -6,6 +5,10 @@ var game_area = {
 		this.canvas.height = 600;
 		this.context = this.canvas.getContext("2d");
 		document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+		this.interval = setInterval(update_game_area, 20);
+	},
+	clear : function() {
+		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 	}
 }
 var bugs = [];
@@ -14,31 +17,84 @@ var food = [];
 function start_game() {
 	game_area.start();
 	// call function that calls while loop and puts bugs on the screen until can't
-	bug = new bug("orange");
-	
-}
-
-function update_game() {
-	game_area.clear();
-
-}
-/*function food() {
-	context = game_area.context;
-	img = new Image();
-	img.onload = function() {
-		canvas.width=40;
-		canvas.height=30;
-		context.drawImage(img, 0,0);
+	bug = new bug(30, 30, "orange", 10, 120);
+	bugs.push(bug);
+	for (i = 0; i < 5; i++) {
+		make_food();
 	}
-	img.src = "http://www.onestopwebmasters.com/wp-content/uploads/2011/06/eitai-bridge.jpg";
-}*/
-function bug(color){
-    this.color = color;
+}
+
+function update_game_area() {
+	game_area.clear();
+	if (bugs.length > 0) {
+		for (i = 0; i < bugs.length; i++) {
+			bugs[i].y += 1;
+			bugs[i].update();
+		}	
+	}
+
+	if (food.length > 0) {
+		for (i = 0; i < food.length; i++) {
+			update_food(food[i][0], food[i][1]);
+		}
+	}
+
+}
+
+function update_food(x, y) {
+	var img = document.getElementById("watermelon");
+	context.drawImage(img, x, y, 35, 35);
+}
+
+function make_food() {
+	var img = document.getElementById("watermelon");
+	console.log(food);
+	// If the list isn't empty
+	if (food.length > 0) {
+		// Compare a random point to food already placed
+		x = Math.random() * 370;
+		y = Math.random() * 450 + 120;
+		free = true;
+		for (i = 0; i < food.length; i++) {
+			if (distance(food[i][0], x, food[i][1], y) < 50) {
+				free = false;
+			}
+		}
+		if (free) {
+			context.drawImage(img, x, y, 35, 35);
+			f = [x, y];
+			food.push(f);
+		}
+		else {
+			make_food();
+		}
+	}
+	// If the list is empty
+	else {
+		x = Math.random() * 370;
+		y = Math.random() * 450 + 120;
+		context.drawImage(img, x, y, 35, 35);
+		f = [x, y];
+		food.push(f);
+	}
+
+}	
+
+function bug(width, height, color, x, y){
+    this.color = color;    
+    // use these to keep track of bug coordinate
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
     context = game_area.context;
-    var radius = 5;
-	// Draw head
+    context.fillStyle = color;
+    context.fillRect(this.x, this.y, this.width, this.height);
+    //var radius = 5;
+
+	/*// Draw head
 	context.beginPath();
-	context.arc(15, 5, radius, Math.PI-1, 2*Math.PI + 1);
+	context.arc(15 * x, 5 * y, radius, Math.PI-1, 2*Math.PI + 1);
 	context.strokeStyle = color;
 	context.stroke();
 	context.fillStyle = color;
@@ -46,7 +102,7 @@ function bug(color){
 
 	// Draw middle
 	context.beginPath();
-	context.arc(15, 11, radius - 2, Math.PI-1, 2*Math.PI + 1);
+	context.arc(15 * x, 11 * y, radius - 2, Math.PI-1, 2*Math.PI + 1);
 	context.stroke();
 	context.fillStyle = color;
 	context.fill();
@@ -57,7 +113,7 @@ function bug(color){
     context.scale(1, 1.75);
     // draw circle which will be stretched into an oval
     context.beginPath();
-    context.arc(15, 13, radius, 0, 2 * Math.PI, false);
+    context.arc(15 * x, 13 * y, radius, 0, 2 * Math.PI, false);
     // restore to original state
     context.restore();
     // Apply styling to oval
@@ -90,7 +146,16 @@ function bug(color){
     //3 right
     context.moveTo(20, 25);
     context.lineTo(27, 28);
-    context.stroke();
+    context.stroke();*/
+
+    this.update = function() {
+    	context.fillStyle = color;
+    	context.fillRect(this.x, this.y, this.width, this.height);
+    }
+}
+
+function distance(x1, y1, x2, y2) {
+	return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2))
 }
 
 function check(value) {
