@@ -17,43 +17,64 @@ var bugs = [];
 var food = [];
 var paused = false;
 var time = 60;
-var score = 0;
+var score;
 var delay = 0;
 var countdown;
 var bug_interval;
+var level = 1;
 
 function start_game() {
 	game_area.start();
 	game_area.canvas.addEventListener('click', bug_click, false);
+	game_area.canvas.addEventListener('click', toggle_pause, false);
 
 	for (i = 0; i < 5; i++) {
 		make_food();
 	}
 	countdown = setInterval(time_countdown, 1000);
 	bug_interval = setInterval(spawn_bug, 1000 + 2000*Math.random());
+	score = 0;
+	draw_topbar();
+	draw_score();
 }
 
 function update_game_area() {
 	game_area.clear();
-	draw_pause_button();
 	draw_countdown();
+	draw_topbar();
+	draw_score();
 	if (bugs.length > 0) {
 		for (i = 0; i < bugs.length; i++) {
-			var time = 60;
 			// If not paused, call function to change bug's x and y
 			if (!paused) {
 				// function to update bug location
-				bugs[i].y += 1;
-				bugs[i].x += 2;
+				bugs[i].y += bug_trajectory(bugs[i][0]);
+				bugs[i].x += bug_trajectory(bugs[i][1]);
 			}
 			bugs[i].update();
 		}	
 	}
+
 	if (food.length > 0) {
 		for (i = 0; i < food.length; i++) {
 			update_food(food[i][0], food[i][1]);
 		}
 	}
+	// If there are still bugs and food left, see if any are touching
+	if (food.length > 0 && bugs.length > 0) {
+		check_bug_to_food();
+	}
+	if (!paused) {
+		draw_pause_button();
+	}
+	if (paused) {
+		draw_play_button();
+	}
+
+	if (food.length == 0 || time == 0) {
+
+	}
+
 }
 
 function update_food(x, y) {
@@ -132,14 +153,35 @@ function draw_countdown() {
 	context.clearRect(0, 0, 150, 80);
 	context.fillStyle = "black";
 	context.font = "20px Arial";
-	context.fillText(time + " sec", 30, 50);
+	context.fillText(time + " sec", 80, 50);
 }
 
 function time_countdown() {
-	time -=1;
+	if (!paused) {
+		time -=1;
+	}
 	if (time <=0) {
 		clearInterval(countdown);
 	}
+}
+
+function draw_score() {
+	context.fillStyle = "black";
+	context.font = "20px Arial";
+	context.fillText(score, 330, 50);
+}
+
+function draw_topbar() {
+	// bar line
+	context.beginPath();
+	context.moveTo(0, 80);
+	context.lineTo(400, 80);
+	context.stroke();
+
+	context.fillStyle = "black";
+	context.font = "20px Arial";
+	context.fillText("Time: ", 20, 50);
+	context.fillText("Score: ", 260, 50);
 }
 
 function find_closest_food(bug) {
@@ -155,12 +197,42 @@ function find_closest_food(bug) {
 	return i_food;
 }
 
+function bug_trajectory(bug) {
+	// i have a bug dest
+	// i have bug x and bug y
+	// i can calculate the slope
+	// deltaX, deltaY
+}
+function check_bug_to_food() {
+	for (var i = 0; i < bugs.length; i++) {
+		// index of food closest to this bug
+		food_index = find_closest_food(bugs[i]);
+		foodX = food[food_index][0];
+		foodY = food[food_index][1];
+		if (distance(bugs[i].x, bugs[i].y, foodX, foodY) <= 37) {
+			food.splice(food_index, 1);
+		}
+	}
+}
+
+function spawn_bug() {
+	x = 380 * Math.random();
+	y = 100;
+	new_bug = new bug(rand_color(), x, y);
+	new_bug.set_dest();
+	bugs.push(new_bug);
+	clearInterval(bug_interval);
+	bug_interval = setInterval(spawn_bug, 1000 + 2000*Math.random());
+	console.log(bugs);
+	console.log(food);
+}
 
 function bug(color, x, y) {
     this.color = color;    
     // use these to keep track of bug coordinate
     this.x = x;
     this.y = y;
+    this.dest = null;
     context = game_area.context;
     var radius = 5;
 	context.fillStyle = color;
@@ -171,7 +243,7 @@ function bug(color, x, y) {
 	if (color == "red") {
 		this.score = 3;
 	}
-
+ 
 	if (color == "black") {
 		this.score = 5;
 	}
@@ -224,27 +296,22 @@ function bug(color, x, y) {
     this.update = function() {
     	bug(color, this.x, this.y);
     }
+    this.set_dest = function() {
+    	this.dest = food[find_closest_food(this)];
+    }
 }
 
-function spawn_bug() {
-	x = 400 * Math.random();
-	y = 100;
-	new_bug = new bug(rand_color(), x, y);
-	bugs.push(new_bug);
-	bug_interval = setInterval(spawn_bug, 1000 + 2000*Math.random());
-	console.log(bugs);
 
-}
 function bug_click(event) {
-	x = event.offsetX;
-	y = event.offsetY;
+	if (!paused) {
+		x = event.offsetX;
+		y = event.offsetY;
 
-	for (i = 0; i < bugs.length; i++) {
-		if (distance(bugs[i].x, bugs[i].y, x, y) < 30) {
-			console.log(distance);
-			bugs.splice(i, 1);
-			score += bug.score;
-			document.getElementById("score").innerHTML = "Score: " + score;
+		for (i = 0; i < bugs.length; i++) {
+			if (distance(bugs[i].x, bugs[i].y, x, y) < 30) {
+				bugs.splice(i, 1);
+				score += bug.score;
+			}
 		}
 	}
 }
@@ -262,17 +329,23 @@ function check(value) {
 	}
 }
 
-function toggle_pause(paused) {
-	if (paused) {
-		context.clearRect(175, 30, 55, 50);
-		draw_play_button;
-		paused = false;
-	}
+function toggle_pause(event) {
+	x = event.offsetX;
+	y = event.offsetY;
 
-	else {
-		context.clearRect(175, 30, 55, 50);
-		draw_pause_button;
-		paused = true;
+	if (x >= 180 && x <= 225 && y >= 20 && y <= 60) {
+		if (!paused) {
+			context.clearRect(175, 30, 55, 50);
+			draw_play_button();
+			clearInterval(bug_interval);
+			paused = true;
+		}
+		else {
+			context.clearRect(175, 30, 55, 50);
+			draw_pause_button();
+			bug_interval = setInterval(spawn_bug, 1000 + 2000*Math.random());
+			paused = false;
+		}
 	}
 }
 
@@ -288,5 +361,9 @@ function toggle_page() {
 		gamepage.style.display ="initial";
 	}
 	start_game();
+}
+
+function toggle_game() {
+
 }
 
