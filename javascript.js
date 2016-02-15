@@ -17,11 +17,11 @@ var bugs = [];
 var food = [];
 var paused = false;
 var time = 60;
-var score;
-var delay = 0;
+var gamescore;
 var countdown;
 var bug_interval;
 var level = 1;
+var lost = false;
 
 function start_game() {
 	game_area.start();
@@ -31,9 +31,9 @@ function start_game() {
 	for (i = 0; i < 5; i++) {
 		make_food();
 	}
+	gamescore = 0;
 	countdown = setInterval(time_countdown, 1000);
 	bug_interval = setInterval(spawn_bug, 1000 + 2000*Math.random());
-	score = 0;
 	draw_topbar();
 	draw_score();
 }
@@ -48,8 +48,8 @@ function update_game_area() {
 			// If not paused, call function to change bug's x and y
 			if (!paused) {
 				// function to update bug location
-				bugs[i].y += bug_trajectory(bugs[i][0]);
-				bugs[i].x += bug_trajectory(bugs[i][1]);
+				bugs[i].y += 1;//bug_trajectory(bugs[i][0]);
+				bugs[i].x += 1;//bug_trajectory(bugs[i][1]);
 			}
 			bugs[i].update();
 		}	
@@ -71,8 +71,9 @@ function update_game_area() {
 		draw_play_button();
 	}
 
-	if (food.length == 0 || time == 0) {
-
+	if (time == 0) {
+		lost = true;
+		toggle_game();
 	}
 
 }
@@ -168,7 +169,7 @@ function time_countdown() {
 function draw_score() {
 	context.fillStyle = "black";
 	context.font = "20px Arial";
-	context.fillText(score, 330, 50);
+	context.fillText(gamescore, 330, 50);
 }
 
 function draw_topbar() {
@@ -307,10 +308,20 @@ function bug_click(event) {
 		x = event.offsetX;
 		y = event.offsetY;
 
-		for (i = 0; i < bugs.length; i++) {
+		for (var i = 0; i < bugs.length; i++) {
 			if (distance(bugs[i].x, bugs[i].y, x, y) < 30) {
-				bugs.splice(i, 1);
-				score += bug.score;
+				if (!paused) {
+					if (bugs[i].color == "orange") {
+						gamescore += 1;
+					}
+					else if (bugs[i].color == "red") {
+						gamescore += 3;
+					}
+					else if (bugs[i].color == "black") {
+						gamescore += 5;
+					}
+					bugs.splice(i, 1);
+				}	
 			}
 		}
 	}
@@ -364,6 +375,12 @@ function toggle_page() {
 }
 
 function toggle_game() {
-
+	console.log("sup");
+	if (lost) {
+		var restart = confirm("Game Over! \n Score: " + score);
+	}
+	if (restart) {
+		toggle_page();
+	}
 }
 
