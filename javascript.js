@@ -16,27 +16,28 @@ var bugs = [];
 // vegetable coordinates
 var food = [];
 var paused = false;
-var time = 60;
-var gamescore;
+var time = 5;
+var gamescore = 0;
 var countdown;
 var bug_interval;
+var end_interval;
 var level = 1;
-var lost = false;
 
 function start_game() {
 	game_area.start();
+	paused = false;
 	game_area.canvas.addEventListener('click', bug_click, false);
 	game_area.canvas.addEventListener('click', toggle_pause, false);
-
-	for (i = 0; i < 5; i++) {
+	while (food.length != 5) {
 		make_food();
 	}
-	gamescore = 0;
 	countdown = setInterval(time_countdown, 1000);
 	bug_interval = setInterval(spawn_bug, 1000 + 2000*Math.random());
+	end_interval = setInterval(check_end, 100);
 	draw_topbar();
 	draw_score();
 }
+
 
 function update_game_area() {
 	game_area.clear();
@@ -48,8 +49,8 @@ function update_game_area() {
 			// If not paused, call function to change bug's x and y
 			if (!paused) {
 				// function to update bug location
-				bugs[i].y += 1;//bug_trajectory(bugs[i][0]);
-				bugs[i].x += 1;//bug_trajectory(bugs[i][1]);
+				bugs[i].x += bug_trajectory(bugs[i])[0];
+				bugs[i].y += bug_trajectory(bugs[i])[1];
 			}
 			bugs[i].update();
 		}	
@@ -69,11 +70,6 @@ function update_game_area() {
 	}
 	if (paused) {
 		draw_play_button();
-	}
-
-	if (time == 0) {
-		lost = true;
-		toggle_game();
 	}
 
 }
@@ -103,7 +99,7 @@ function make_food() {
 	if (food.length > 0) {
 		// Compare a random point to food already placed
 		x = Math.random() * 370;
-		y = Math.random() * 450 + 120;
+		y = Math.random() * 450 + 220;
 		free = true;
 		for (i = 0; i < food.length; i++) {
 			if (distance(food[i][0], food[i][1], x, y) < 50) {
@@ -122,7 +118,7 @@ function make_food() {
 	// If the list is empty
 	else {
 		x = Math.random() * 370;
-		y = Math.random() * 450 + 120;
+		y = Math.random() * 450 + 220;
 		context.drawImage(img, x, y, 35, 35);
 		f = [x, y];
 		food.push(f);
@@ -143,10 +139,10 @@ function draw_play_button() {
 
 function draw_pause_button() {
 	context.beginPath();
+	context.moveTo(170, 20);
+	context.lineTo(170, 60);
 	context.moveTo(190, 20);
 	context.lineTo(190, 60);
-	context.moveTo(215, 20);
-	context.lineTo(215, 60);
 	context.stroke();
 }
 
@@ -185,6 +181,12 @@ function draw_topbar() {
 	context.fillText("Score: ", 260, 50);
 }
 
+function draw_2() {
+	context.fillStyle = "black";
+	context.font = "20px Arial";
+	context.fillText("Level 2 will begin in 3 seconds...", 58, 200);
+}
+
 function find_closest_food(bug) {
 	min_distance = 750;
 	i_food = 0;
@@ -199,11 +201,14 @@ function find_closest_food(bug) {
 }
 
 function bug_trajectory(bug) {
-	// i have a bug dest
-	// i have bug x and bug y
-	// i can calculate the slope
-	// deltaX, deltaY
+	deltaX = bug.dest[0] - bug.x;
+	deltaY = bug.dest[1] - bug.y;
+	hypotenuse = distance(bug.x, bug.y, bug.dest[0], bug.dest[1]);
+	moveX = ((deltaX / hypotenuse) * bug.speed) / 50;
+	moveY = ((deltaY / hypotenuse) * bug.speed) / 50;
+	return [moveX, moveY];
 }
+
 function check_bug_to_food() {
 	for (var i = 0; i < bugs.length; i++) {
 		// index of food closest to this bug
@@ -212,6 +217,10 @@ function check_bug_to_food() {
 		foodY = food[food_index][1];
 		if (distance(bugs[i].x, bugs[i].y, foodX, foodY) <= 37) {
 			food.splice(food_index, 1);
+			// if a food is eaten, update every bug's dest
+			for (j = 0; j < bugs.length; j++) {
+				bugs[j].dest = food[find_closest_food(bugs[j])];
+			}
 		}
 	}
 }
@@ -224,8 +233,6 @@ function spawn_bug() {
 	bugs.push(new_bug);
 	clearInterval(bug_interval);
 	bug_interval = setInterval(spawn_bug, 1000 + 2000*Math.random());
-	console.log(bugs);
-	console.log(food);
 }
 
 function bug(color, x, y) {
@@ -238,15 +245,15 @@ function bug(color, x, y) {
     var radius = 5;
 	context.fillStyle = color;
 	if (color == "orange") {
-		this.score = 1;
+		level == 1 ? this.speed = 60 : this.speed = 80;
 	}
 
 	if (color == "red") {
-		this.score = 3;
+		level == 1 ? this.speed = 75 : this.speed = 100;
 	}
  
 	if (color == "black") {
-		this.score = 5;
+		level == 1 ? this.speed = 150 : this.speed = 200;
 	}
 
 	// Draw head
@@ -302,7 +309,6 @@ function bug(color, x, y) {
     }
 }
 
-
 function bug_click(event) {
 	if (!paused) {
 		x = event.offsetX;
@@ -333,10 +339,10 @@ function distance(x1, y1, x2, y2) {
 
 function check(value) {
 	if (value == 1) {
-		document.getElementById("score_display").innerHTML = "300";
+		document.getElementById("score_display").innerHTML = "16";
 	}
 	else {
-		document.getElementById("score_display").innerHTML = "100";
+		document.getElementById("score_display").innerHTML = "22";
 	}
 }
 
@@ -360,27 +366,73 @@ function toggle_pause(event) {
 	}
 }
 
-function toggle_page() {
-	var homepage = 	document.getElementById("homepage");
-	var gamepage = document.getElementById("gamepage");
-	if (homepage.style.display != "none") {
-		homepage.style.display = "none";
-		gamepage.style.visibility = "visible";
+
+function check_end() {
+	if (food.length == 0) {
+		clearInterval(end_interval);
+		clearInterval(bug_interval);
+		clearInterval(game_area.interval);
+		clearInterval(countdown);
+		time = 10;
+		bugs = [];
+		gamescore = 0;
+		lose();
+	}
+
+	if (time == 0) {
+		clearInterval(end_interval);
+		clearInterval(bug_interval);
+		clearInterval(game_area.interval);
+		clearInterval(countdown);
+		time = 10;
+		bugs = [];
+		gamescore = 0;
+		win();
+	}
+}
+
+function lose() {
+	var restart = confirm("Game Over! \nScore: " + gamescore + "\nReplay?");
+	level = 1;
+	if (restart) {
+		game_page();
 	}
 	else {
-		homepage.style.display = "initial";
-		gamepage.style.display ="initial";
+		home_page();
 	}
+}
+
+function win() {
+	if (level == 1) {
+		level = 2;
+		setTimeout(start_game, 3000);
+		draw_2();
+	}
+
+	else {
+		level = 1;
+		var restart = confirm("You beat Level 2! \nScore: " + gamescore
+			+ "\nReplay?");
+		if (restart) {
+			game_page();
+		}
+		else {
+			home_page();
+		}
+	}
+}
+
+function game_page() {
+	document.getElementById("homepage").style.visibility = "hidden";
+	game_area.canvas.style.visibility = "visible";
+	document.getElementById("homepage").style.display = "none";
+	game_area.canvas.style.display = "block";
 	start_game();
 }
 
-function toggle_game() {
-	console.log("sup");
-	if (lost) {
-		var restart = confirm("Game Over! \n Score: " + score);
-	}
-	if (restart) {
-		toggle_page();
-	}
+function home_page() {
+	document.getElementById("homepage").style.visibility = "visible";
+	document.getElementById("homepage").style.display = "block";
+	game_area.canvas.style.display = "none";
+	game_area.canvas.style.visibility = "hidden";
 }
-
